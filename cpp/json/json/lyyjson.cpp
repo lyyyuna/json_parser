@@ -27,6 +27,8 @@ namespace lyy
 		switch (*c.json)
 		{
 		case 't': return parse_true(c, v);
+		case 'f': return parse_false(c, v);
+		case 'n': return parse_null(c, v);
 		default: return ParseRet::PARSE_INVALID_VALUE;
 		}
 	}
@@ -51,6 +53,30 @@ namespace lyy
 		}
 		c.json += 3;
 		v.type = JsonType::TRUE;
+		return ParseRet::PARSE_OK;
+	}
+
+	ParseRet JsonParser::parse_false(JsonContext& c, JsonValue& v)
+	{
+		next(c, 'f');
+		if (c.json[0] != 'a' || c.json[1] != 'l' || c.json[2] != 's' || c.json[3] != 'e')
+		{
+			return ParseRet::PARSE_INVALID_VALUE;
+		}
+		c.json += 4;
+		v.type = JsonType::FALSE;
+		return ParseRet::PARSE_OK;
+	}
+
+	ParseRet JsonParser::parse_null(JsonContext& c, JsonValue& v)
+	{
+		next(c, 'n');
+		if (c.json[0] != 'u' || c.json[1] != 'l' || c.json[2] != 'l')
+		{
+			return ParseRet::PARSE_INVALID_VALUE;
+		}
+		c.json += 3;
+		v.type = JsonType::JNULL;
 		return ParseRet::PARSE_OK;
 	}
 }

@@ -19,3 +19,24 @@ TEST_CASE(parse_true)
 	TEST_ASSERT(JsonType::TRUE == v.type);
 	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "tru"));
 }
+
+TEST_CASE(parse_false)
+{
+	JsonValue v;
+	v.type = JsonType::TRUE;
+
+	TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, "false"));
+	TEST_ASSERT(JsonType::FALSE == v.type);
+	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "fals"));
+}
+
+TEST_CASE(parse_null)
+{
+	JsonValue v;
+	v.type = JsonType::FALSE;
+
+	TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, "null"));
+	TEST_ASSERT(JsonType::JNULL == v.type);
+	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "nul"));
+
+}
