@@ -17,7 +17,7 @@ TEST_CASE(parse_true)
 
 	TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, "true"));
 	TEST_ASSERT(JsonType::TRUE == v.type);
-	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "tru"));
+	// TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "tru"));
 }
 
 TEST_CASE(parse_false)
@@ -27,7 +27,7 @@ TEST_CASE(parse_false)
 
 	TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, "false"));
 	TEST_ASSERT(JsonType::FALSE == v.type);
-	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "fals"));
+	// TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "fals"));
 }
 
 TEST_CASE(parse_null)
@@ -37,6 +37,40 @@ TEST_CASE(parse_null)
 
 	TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, "null"));
 	TEST_ASSERT(JsonType::JNULL == v.type);
-	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "nul"));
+	// TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "nul"));
+}
 
+TEST_CASE(parse_expect_value)
+{
+	JsonValue v;
+	v.type = JsonType::FALSE;
+
+	TEST_ASSERT(ParseRet::PARSE_EXCEPT_VALUE == JsonParser::parse(v, ""));
+	TEST_ASSERT(JsonType::JNULL == v.type);
+
+	v.type = JsonType::FALSE;
+
+	TEST_ASSERT(ParseRet::PARSE_EXCEPT_VALUE == JsonParser::parse(v, " "));
+	TEST_ASSERT(JsonType::JNULL == v.type);
+}
+
+TEST_CASE(parse_invalid_value)
+{
+	JsonValue v;
+	v.type = JsonType::FALSE;
+
+	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "nul"));
+	TEST_ASSERT(JsonType::JNULL == v.type);
+
+	TEST_ASSERT(ParseRet::PARSE_INVALID_VALUE == JsonParser::parse(v, "%^"));
+	TEST_ASSERT(JsonType::JNULL == v.type);
+}
+
+TEST_CASE(parse_root_not_singular)
+{
+	JsonValue v;
+	v.type = JsonType::FALSE;
+
+	TEST_ASSERT(ParseRet::PARSE_ROOT_NOT_SINGULAR == JsonParser::parse(v, "null false"));
+	TEST_ASSERT(JsonType::JNULL == v.type);
 }

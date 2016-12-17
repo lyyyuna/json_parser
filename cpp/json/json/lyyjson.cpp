@@ -29,6 +29,7 @@ namespace lyy
 		case 't': return parse_true(c, v);
 		case 'f': return parse_false(c, v);
 		case 'n': return parse_null(c, v);
+		case '\0': return ParseRet::PARSE_EXCEPT_VALUE;
 		default: return ParseRet::PARSE_INVALID_VALUE;
 		}
 	}
