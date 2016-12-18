@@ -30,7 +30,7 @@ namespace lyy
 		case 'f': return parse_false(c, v);
 		case 'n': return parse_null(c, v);
 		case '\0': return ParseRet::PARSE_EXCEPT_VALUE;
-		default: return ParseRet::PARSE_INVALID_VALUE;
+		default: return parse_number(c, v);
 		}
 	}
 
@@ -78,6 +78,55 @@ namespace lyy
 		}
 		c.json += 3;
 		v.type = JsonType::JNULL;
+		return ParseRet::PARSE_OK;
+	}
+
+	ParseRet JsonParser::parse_number(JsonContext& c, JsonValue& v)
+	{
+		const char* tmp = c.json;
+
+		if (*tmp == '-') tmp++;
+		if (*tmp == '0') tmp++; // see spec
+		else {
+			if (!isdigit(*tmp) || '0' == *tmp) // digit should be 1-9 as first character
+				return ParseRet::PARSE_INVALID_VALUE;
+			for (tmp++; isdigit(*tmp); ++tmp)
+			{ }
+		}
+		if (*tmp == '.')
+		{
+			tmp++;
+			if (!isdigit(*tmp))
+				return ParseRet::PARSE_INVALID_VALUE;
+			for (tmp++; isdigit(*tmp); ++tmp)
+			{ }
+		}
+		if (*tmp == 'e' || *tmp == 'E')
+		{
+			tmp++;
+			if (*tmp == '+' || *tmp == '-')
+				tmp++;
+			if (!isdigit(*tmp))
+				return ParseRet::PARSE_INVALID_VALUE;
+			for (tmp++; isdigit(*tmp); ++tmp)
+			{ }
+		}
+
+		errno = 0;
+		v.num = strtod(c.json, NULL);
+		if (errno == ERANGE)
+		{
+			if (v.num == HUGE_VAL || v.num == -HUGE_VAL)
+			{
+				return ParseRet::PARSE_NUMBER_TOO_BIG;
+			}
+			// may not happen...
+			// for 1e-10000 this kind of number, errno is also out of range
+			// but return 0, i think it is also OK, due to extremely too small number.
+			// return ParseRet::PARSE_INVALID_VALUE;
+		}
+		v.type = JsonType::NUMBER;
+		c.json = tmp; // move the pointer
 		return ParseRet::PARSE_OK;
 	}
 }

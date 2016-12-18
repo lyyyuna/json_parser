@@ -3,8 +3,10 @@
 
 #include <iostream>
 #include <string>
+#include "lyyjson.h"
 
 using namespace std;
+using namespace lyy;
 
 #ifndef LYY_JSON_RELEASE
 
@@ -33,5 +35,13 @@ void TEST_CASE_FUNCTION_##NAME(void)
 
 #define TEST_ASSERT(CONDITION) do{ if (!(CONDITION)) throw 0; } while (0)
 #define TEST_PRINT(MESSAGE) cout << (MESSAGE) << endl;
+
+#define TEST_NUMBER(expect, json)										\
+	do {																\
+		JsonValue v;													\
+		TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, json));	\
+		TEST_ASSERT(JsonType::NUMBER == v.type);						\
+		TEST_ASSERT(expect == v.num);									\
+	} while(0)
 
 #endif
