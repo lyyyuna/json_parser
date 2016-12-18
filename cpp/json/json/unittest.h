@@ -42,6 +42,13 @@ void TEST_CASE_FUNCTION_##NAME(void)
 		TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, json));	\
 		TEST_ASSERT(JsonType::NUMBER == v.type);						\
 		TEST_ASSERT(expect == v.num);									\
-	} while(0)
+			} while(0)
+
+#define TEST_ERROR(error, json)									\
+	do {														\
+		JsonValue v;											\
+		TEST_ASSERT(error == JsonParser::parse(v, json));		\
+		TEST_ASSERT(JsonType::JNULL == v.type);					\
+	} while (0)
 
 #endif

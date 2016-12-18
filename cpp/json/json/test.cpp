@@ -107,3 +107,22 @@ TEST_CASE(parse_number)
 	TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");  /* Max double */
 	TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
+
+TEST_CASE(parse_number_FET)
+{
+	/* invalid number */
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "+0");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "+1");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, ".123"); /* at least one digit before '.' */
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "1.");   /* at least one digit after '.' */
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "INF");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "inf");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "NAN");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "nan");
+}
+
+TEST_CASE(parse_number_too_big)
+{
+	TEST_ERROR(ParseRet::PARSE_NUMBER_TOO_BIG, "1e309");
+	TEST_ERROR(ParseRet::PARSE_NUMBER_TOO_BIG, "-1e309");
+}
