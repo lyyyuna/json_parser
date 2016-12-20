@@ -2,104 +2,134 @@
 
 namespace lyy
 {
-	ParseRet JsonParser::parse(JsonValue& v, const char* json)
+	/*
+	* main parse
+	*/
+	JsonValue::Ptr JsonParser::parse(const char* json, ParseRet& ret)
 	{
-		JsonContext c;
-		c.json = json;
-		v.type = JsonType::JNULL;
-		// consume whitespace
+		auto c = JsonContext::Ptr(new JsonContext(json));
+
+		// consume possible whitespace
 		parse_whitespace(c);
-		auto ret = parse_value(c, v);
+		auto v = parse_value(c, ret);
 		if (ParseRet::PARSE_OK == ret)
 		{
-			// consume whitespace
 			parse_whitespace(c);
-			if (*c.json != '\0')
-			{
+			if (*c->json != '\0')
 				ret = ParseRet::PARSE_ROOT_NOT_SINGULAR;
-			}
 		}
-		return ret;
+		return v;
 	}
 
-	ParseRet JsonParser::parse_value(JsonContext& c, JsonValue& v)
+	JsonValue::Ptr JsonParser::parse_value(JsonContext::Ptr c, ParseRet& ret)
 	{
-		switch (*c.json)
+		switch (*c->json)
 		{
-		case 't': return parse_true(c, v);
-		case 'f': return parse_false(c, v);
-		case 'n': return parse_null(c, v);
-		case '\0': return ParseRet::PARSE_EXCEPT_VALUE;
-		default: return parse_number(c, v);
+		case 'n': return parse_null(c, ret);
+		case 't': return parse_true(c, ret);
+		case 'f': return parse_false(c, ret);
+		case '\0':
+			ret = ParseRet::PARSE_EXCEPT_VALUE;
+			return JsonValue::Ptr(new JsonValue());
+		default:
+			ret = ParseRet::PARSE_INVALID_VALUE;
+			return JsonValue::Ptr(new JsonValue());
 		}
 	}
 
-	// Ignore whitespace
-	void JsonParser::parse_whitespace(JsonContext& c)
+	/*
+	* consume as much whitespace as possible
+	*/
+	void JsonParser::parse_whitespace(JsonContext::Ptr c)
 	{
-		auto p = c.json;
+		auto p = c->json;
 		while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
 		{
 			p++;
 		}
-		c.json = p;
+		c->json = p;
 	}
 
-	ParseRet JsonParser::parse_true(JsonContext& c, JsonValue& v)
+	/*
+	* parse null
+	*/
+	JsonValue::Ptr JsonParser::parse_null(JsonContext::Ptr c, ParseRet& ret)
+	{
+		auto v = JsonValue::Ptr(new JsonValue());
+
+		next(c, 'n');
+		if (c->json[0] != 'u' || c->json[1] != 'l' || c->json[2] != 'l')
+		{
+			ret = ParseRet::PARSE_INVALID_VALUE;
+			return v;
+		}
+		c->json += 3;
+		ret = ParseRet::PARSE_OK;
+		return v;
+	}
+
+	/*
+	* parse true
+	*/
+	JsonValue::Ptr JsonParser::parse_true(JsonContext::Ptr c, ParseRet& ret)
 	{
 		next(c, 't');
-		if (c.json[0] != 'r' || c.json[1] != 'u' || c.json[2] != 'e')
+		if (c->json[0] != 'r' || c->json[1] != 'u' || c->json[2] != 'e')
 		{
-			return ParseRet::PARSE_INVALID_VALUE;
+			ret = ParseRet::PARSE_INVALID_VALUE;
+			return JsonValue::Ptr(new JsonValue());;
 		}
-		c.json += 3;
-		v.type = JsonType::TRUE;
-		return ParseRet::PARSE_OK;
+
+		auto v = JsonValue::Ptr(new JsonValue(true));
+		c->json += 3;
+		ret = ParseRet::PARSE_OK;
+		return v;
 	}
 
-	ParseRet JsonParser::parse_false(JsonContext& c, JsonValue& v)
+	/*
+	* parse false
+	*/
+	JsonValue::Ptr JsonParser::parse_false(JsonContext::Ptr c, ParseRet& ret)
 	{
 		next(c, 'f');
-		if (c.json[0] != 'a' || c.json[1] != 'l' || c.json[2] != 's' || c.json[3] != 'e')
+		if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e')
 		{
-			return ParseRet::PARSE_INVALID_VALUE;
+			ret = ParseRet::PARSE_INVALID_VALUE;
+			return JsonValue::Ptr(new JsonValue());;
 		}
-		c.json += 4;
-		v.type = JsonType::FALSE;
-		return ParseRet::PARSE_OK;
+
+		auto v = JsonValue::Ptr(new JsonValue(false));
+		c->json += 4;
+		ret = ParseRet::PARSE_OK;
+		return v;
 	}
 
-	ParseRet JsonParser::parse_null(JsonContext& c, JsonValue& v)
+	/*
+	* parse number
+	*/
+	JsonValue::Ptr JsonParser::parse_number(JsonContext::Ptr c, ParseRet& ret)
 	{
-		next(c, 'n');
-		if (c.json[0] != 'u' || c.json[1] != 'l' || c.json[2] != 'l')
-		{
-			return ParseRet::PARSE_INVALID_VALUE;
-		}
-		c.json += 3;
-		v.type = JsonType::JNULL;
-		return ParseRet::PARSE_OK;
-	}
-
-	ParseRet JsonParser::parse_number(JsonContext& c, JsonValue& v)
-	{
-		const char* tmp = c.json;
+		const char* tmp = c->json;
 
 		if (*tmp == '-') tmp++;
-		if (*tmp == '0') tmp++; // see spec
+		if (*tmp == '0') tmp++;
 		else {
-			if (!isdigit(*tmp) || '0' == *tmp) // digit should be 1-9 as first character
-				return ParseRet::PARSE_INVALID_VALUE;
-			for (tmp++; isdigit(*tmp); ++tmp)
-			{ }
+			if (!isdigit(*tmp) || '0' == *tmp)
+			{
+				ret = ParseRet::PARSE_INVALID_VALUE;
+				return JsonValue::Ptr(new JsonValue());
+			}
+			for (tmp++; isdigit(*tmp); ++tmp) {}
 		}
 		if (*tmp == '.')
 		{
 			tmp++;
 			if (!isdigit(*tmp))
-				return ParseRet::PARSE_INVALID_VALUE;
-			for (tmp++; isdigit(*tmp); ++tmp)
-			{ }
+			{
+				ret = ParseRet::PARSE_INVALID_VALUE;
+				return JsonValue::Ptr(new JsonValue());
+			}
+			for (tmp++; isdigit(*tmp); ++tmp) {}
 		}
 		if (*tmp == 'e' || *tmp == 'E')
 		{
@@ -107,26 +137,27 @@ namespace lyy
 			if (*tmp == '+' || *tmp == '-')
 				tmp++;
 			if (!isdigit(*tmp))
-				return ParseRet::PARSE_INVALID_VALUE;
-			for (tmp++; isdigit(*tmp); ++tmp)
-			{ }
+			{
+				ret = ParseRet::PARSE_INVALID_VALUE;
+				return JsonValue::Ptr(new JsonValue());
+			}
+			for (tmp++; isdigit(*tmp); ++tmp) {}
 		}
 
 		errno = 0;
-		v.num = strtod(c.json, NULL);
+		double num = strtod(c->json, NULL);
 		if (errno == ERANGE)
 		{
-			if (v.num == HUGE_VAL || v.num == -HUGE_VAL)
+			if (num == HUGE_VAL || num == -HUGE_VAL)
 			{
-				return ParseRet::PARSE_NUMBER_TOO_BIG;
+				ret = ParseRet::PARSE_NUMBER_TOO_BIG;
+				return JsonValue::Ptr(new JsonValue());
 			}
-			// may not happen...
-			// for 1e-10000 this kind of number, errno is also out of range
-			// but return 0, i think it is also OK, due to extremely too small number.
-			// return ParseRet::PARSE_INVALID_VALUE;
 		}
-		v.type = JsonType::NUMBER;
-		c.json = tmp; // move the pointer
-		return ParseRet::PARSE_OK;
+
+		auto v = JsonValue::Ptr(new JsonValue(num));
+		c->json = tmp;
+		ret = ParseRet::PARSE_OK;
+		return v;
 	}
 }

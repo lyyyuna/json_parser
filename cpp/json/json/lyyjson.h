@@ -2,32 +2,25 @@
 #define LYY_JSON_H
 
 #include <string>
-#include <assert.h>
+#include <vector>
+#include <memory>
+#include <cassert>
 #include <cctype>
 #include <cstdlib>
+
+using namespace std;
 
 namespace lyy
 {
 	enum class JsonType
 	{
-		JNULL,		// null
-		FALSE,
-		TRUE,
-		NUMBER,		// support E/e
-		STRING,
-		ARRAY,
-		OBJECT
-	};
-
-	struct JsonValue
-	{
-		JsonType type;
-		double num;
-	};
-
-	struct JsonContext
-	{
-		const char* json;
+		JNULL,
+		JString,
+		JTRUE,
+		JFALSE,
+		JNUMBER,
+		JARRAY,
+		JOBJECT
 	};
 
 	enum class ParseRet
@@ -39,21 +32,50 @@ namespace lyy
 		PARSE_NUMBER_TOO_BIG	// too big number
 	};
 
-	struct JsonParser
+	class JsonContext
 	{
-		static ParseRet		parse(JsonValue& v, const char* json);
-		static ParseRet		parse_value(JsonContext& c, JsonValue& v);
-		static ParseRet		parse_null(JsonContext& c, JsonValue& v);
-		static ParseRet		parse_true(JsonContext& c, JsonValue& v);
-		static ParseRet		parse_false(JsonContext& c, JsonValue& v);
-		static ParseRet		parse_number(JsonContext& c, JsonValue& v);
+	public:
+		typedef shared_ptr<JsonContext>		Ptr;
+		JsonContext();
+		JsonContext(const char* json);
 
-		static void			parse_whitespace(JsonContext& c);
-		static void			next(JsonContext& c, char ch) { assert(*c.json == (ch)); c.json++; }
-		static JsonType     get_type(JsonValue& v) { return v.type; }
+
+		const char* json;
 	};
 
+	struct JsonValue
+	{
+		typedef shared_ptr<JsonValue>	Ptr;
+		typedef shared_ptr<string>		StrPtr;
 
+	public:
+		JsonValue();	// default as JNULL
+		JsonValue(bool bool_value);
+		JsonValue(double double_value);
+
+		JsonType get_type();
+
+	private:
+		JsonType type;
+		union {
+			double number_value;
+			string* string_value;
+		};
+
+	};
+
+	struct JsonParser
+	{
+		static JsonValue::Ptr		parse(const char* json, ParseRet& ret);
+		static JsonValue::Ptr		parse_value(JsonContext::Ptr c, ParseRet& ret);
+		static JsonValue::Ptr		parse_null(JsonContext::Ptr c, ParseRet& ret);
+		static JsonValue::Ptr		parse_true(JsonContext::Ptr c, ParseRet& ret);
+		static JsonValue::Ptr		parse_false(JsonContext::Ptr c, ParseRet& ret);
+		static JsonValue::Ptr		parse_number(JsonContext::Ptr c, ParseRet& ret);
+
+		static void					parse_whitespace(JsonContext::Ptr c);
+		static void					next(JsonContext::Ptr c, char ch) { assert(*c->json == (ch)); c->json++; }
+	};
 }
 
 #endif

@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lyyjson.cpp" />
+    <ClCompile Include="lyyjsonTool.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

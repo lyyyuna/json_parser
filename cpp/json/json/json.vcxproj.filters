@@ -29,5 +29,8 @@
     <ClCompile Include="lyyjson.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lyyjsonTool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
