@@ -32,4 +32,17 @@ namespace lyy
 		return this->type;
 	}
 
+	/* get value */
+	ValueRet JsonValue::get_value(double& number)
+	{
+		if (JsonType::JNUMBER == this->type)
+		{
+			number = this->number_value;
+			return ValueRet::OK;
+		} else {
+			number = 0;
+			return ValueRet::ERR;
+		}
+	}
+
 }

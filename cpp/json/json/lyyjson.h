@@ -32,6 +32,12 @@ namespace lyy
 		PARSE_NUMBER_TOO_BIG	// too big number
 	};
 
+	enum class ValueRet
+	{
+		OK,
+		ERR
+	};
+
 	class JsonContext
 	{
 	public:
@@ -54,6 +60,8 @@ namespace lyy
 		JsonValue(double double_value);
 
 		JsonType get_type();
+		ValueRet get_value(double& number_value);
+		ValueRet get_value(string& string_value);
 
 	private:
 		JsonType type;
