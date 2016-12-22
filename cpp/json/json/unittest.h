@@ -38,17 +38,28 @@ void TEST_CASE_FUNCTION_##NAME(void)
 
 #define TEST_NUMBER(expect, json)										\
 	do {																\
-		JsonValue v;													\
-		TEST_ASSERT(ParseRet::PARSE_OK == JsonParser::parse(v, json));	\
-		TEST_ASSERT(JsonType::NUMBER == v.type);						\
-		TEST_ASSERT(expect == v.num);									\
+		ParseRet ret;													\
+		auto v = JsonParser::parse(json, ret);							\
+		TEST_ASSERT(ParseRet::PARSE_OK == ret);							\
+		TEST_ASSERT(JsonType::JNUMBER == v->get_type());				\
+		double number;													\
+		TEST_ASSERT(ValueRet::OK == v->get_value(number));				\
+		TEST_ASSERT(expect == number);									\
 	} while(0)
 
-#define TEST_ERROR(error, json)									\
-	do {														\
-		JsonValue v;											\
-		TEST_ASSERT(error == JsonParser::parse(v, json));		\
-		TEST_ASSERT(JsonType::JNULL == v.type);					\
-	} while (0)
+#define TEST_ERROR(error, json)											\
+	do {																\
+		ParseRet ret;													\
+		auto v = JsonParser::parse(json, ret);							\
+		TEST_ASSERT(error == ret);										\
+		TEST_ASSERT(JsonType::JNULL == v->get_type());					\
+	} while(0)
+
+#define TEST_ERROR_SINGULAR(error, json)								\
+	do {																\
+		ParseRet ret;													\
+		auto v = JsonParser::parse(json, ret);							\
+		TEST_ASSERT(error == ret);										\
+	} while(0)
 
 #endif

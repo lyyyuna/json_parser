@@ -31,9 +31,7 @@ namespace lyy
 		case '\0':
 			ret = ParseRet::PARSE_EXCEPT_VALUE;
 			return JsonValue::Ptr(new JsonValue());
-		default:
-			ret = ParseRet::PARSE_INVALID_VALUE;
-			return JsonValue::Ptr(new JsonValue());
+		default: return parse_number(c, ret);
 		}
 	}
 
