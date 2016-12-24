@@ -140,10 +140,47 @@ TEST_CASE(parse_invalid_string_escape_FET)
 	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_ESCAPE, "\"\\x12\"");
 }
 
-/*
+#if 0
 TEST_CASE(parse_invalid_string_char_FET)
 {
-	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_CHAR, "\"\x01\"");
+	//TEST_ERROR(ParseRet::PARSE_INVALID_STRING_CHAR, "\"\x01\"");
 	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_CHAR, "\"\x1F\"");
 }
-*/
+#endif
+
+
+TEST_CASE(parse_unicode_string)
+{
+	TEST_STRING("Hello\0World", "\"Hello\\u0000World\"");
+	TEST_STRING("\x24", "\"\\u0024\"");         /* Dollar sign U+0024 */
+	TEST_STRING("\xC2\xA2", "\"\\u00A2\"");     /* Cents sign U+00A2 */
+	TEST_STRING("\xE2\x82\xAC", "\"\\u20AC\""); /* Euro sign U+20AC */
+	TEST_STRING("\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\"");  /* G clef sign U+1D11E */
+	TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
+}
+
+TEST_CASE(parse_invalid_unicode_surrogate_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_SURROGATE, "\"\\uDBFF\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\\\\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uDBFF\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
+}
+
+TEST_CASE(parse_invalid_unicode_hex_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u0\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u01\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u012\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u/000\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\uG000\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u0/00\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u0G00\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u0/00\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u00G0\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u000/\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u000G\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u 123\"");
+}

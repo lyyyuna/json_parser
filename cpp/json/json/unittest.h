@@ -45,7 +45,7 @@ void TEST_CASE_FUNCTION_##NAME(void)
 		double number;													\
 		TEST_ASSERT(ValueRet::OK == v->get_value(number));				\
 		TEST_ASSERT(expect == number);									\
-	} while(0)
+						} while(0)
 
 #define TEST_ERROR(error, json)											\
 	do {																\
@@ -53,25 +53,29 @@ void TEST_CASE_FUNCTION_##NAME(void)
 		auto v = JsonParser::parse(json, ret);							\
 		TEST_ASSERT(error == ret);										\
 		TEST_ASSERT(JsonType::JNULL == v->get_type());					\
-	} while(0)
+						} while(0)
 
 #define TEST_ERROR_SINGULAR(error, json)								\
 	do {																\
 		ParseRet ret;													\
 		auto v = JsonParser::parse(json, ret);							\
 		TEST_ASSERT(error == ret);										\
-	} while(0)
+						} while(0)
 
-#define TEST_STRING(expect, json)							\
-	do {													\
-		ParseRet ret;										\
-		auto v = JsonParser::parse(json, ret);				\
-		TEST_ASSERT(ParseRet::PARSE_OK == ret);				\
-		TEST_ASSERT(JsonType::JSTRING == v->get_type());	\
-		string str;											\
-		TEST_ASSERT(ValueRet::OK == v->get_value(str));		\
-		TEST_ASSERT(str == string(expect));					\
-	} while (0)
+
+#define TEST_STRING( expect,   json)									\
+	do{																	\
+		ParseRet ret;													\
+		auto v = JsonParser::parse(json, ret);							\
+		TEST_ASSERT(ParseRet::PARSE_OK == ret);							\
+		TEST_ASSERT(JsonType::JSTRING == v->get_type());				\
+		JsonValue::Str str;												\
+		TEST_ASSERT(ValueRet::OK == v->get_value(str));					\
+		auto expectsize = sizeof(expect) - 1;							\
+		TEST_ASSERT(expectsize == str.size());							\
+		for (JsonValue::Str::size_type i = 0; i < str.size(); i++)		\
+			TEST_ASSERT((unsigned char)expect[i] == str[i]);			\
+	} while(0)
 
 
 #endif

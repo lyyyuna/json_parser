@@ -161,13 +161,56 @@ namespace lyy
 	}
 
 	/*
-	* parse number
+	* 
+	*/
+	const char* JsonParser::parse_hex4(const char* p, unsigned* u)
+	{
+		*u = 0;
+		for (int i = 0; i < 4; ++i)
+		{
+			char ch = *p++;
+			*u <<= 4;
+			if (ch >= '0' && ch <= '9')  *u |= ch - '0';
+			else if (ch >= 'A' && ch <= 'F')  *u |= ch - ('A' - 10);
+			else if (ch >= 'a' && ch <= 'f')  *u |= ch - ('a' - 10);
+			else return NULL;
+		}
+		return p;
+	}
+
+	/*
+	*
+	*/
+	void JsonParser::encode_utf8(JsonContext::Ptr c, unsigned u, JsonValue::Str& tmpstr)
+	{
+		if (u <= 0x7f)
+			tmpstr.push_back(u & 0xff);
+		else if (u <= 0x7ff) {
+			tmpstr.push_back(0xC0 | ((u >> 6)	& 0xFF));
+			tmpstr.push_back(0x80 | (u			& 0x3F));
+		}
+		else if (u <= 0xffff) {
+			tmpstr.push_back(0xE0 | ((u >> 12) & 0xFF));
+			tmpstr.push_back(0x80 | ((u >> 6) & 0x3F));
+			tmpstr.push_back(0x80 | (u & 0x3F));
+		}
+		else {
+			assert(u <= 0x10FFFF);
+			tmpstr.push_back(0xF0 | ((u >> 18) & 0xFF));
+			tmpstr.push_back(0x80 | ((u >> 12) & 0x3F));
+			tmpstr.push_back(0x80 | ((u >> 6) & 0x3F));
+			tmpstr.push_back(0x80 | (u & 0x3F));
+		}
+	}
+
+	/*
+	* parse string
 	*/
 	JsonValue::Ptr JsonParser::parse_string(JsonContext::Ptr c, ParseRet& ret)
 	{
 		next(c, '\"');
 		auto tmp = c->json;
-		string tmpstr;
+		JsonValue::Str tmpstr;
 
 		while (true)
 		{
@@ -191,6 +234,45 @@ namespace lyy
 					case 'b': tmpstr.push_back('\b'); break;
 					case 'r': tmpstr.push_back('\r'); break;
 					case 't': tmpstr.push_back('\t'); break;
+					case 'u': {
+						unsigned u, u2;
+						if (!(tmp = parse_hex4(tmp, &u)))
+						{
+							auto v = JsonValue::Ptr(new JsonValue());
+							ret = ParseRet::PARSE_INVALID_UNICODE_HEX;
+							return v;
+						}
+						if (u >= 0xD800 && u <= 0xDBFF)
+						{
+							if (*tmp++ != '\\')
+							{
+								auto v = JsonValue::Ptr(new JsonValue());
+								ret = ParseRet::PARSE_INVALID_UNICODE_SURROGATE;
+								return v;
+							}
+							if (*tmp++ != 'u')
+							{
+								auto v = JsonValue::Ptr(new JsonValue());
+								ret = ParseRet::PARSE_INVALID_UNICODE_SURROGATE;
+								return v;
+							}
+							if (!(tmp = parse_hex4(tmp, &u2)))
+							{
+								auto v = JsonValue::Ptr(new JsonValue());
+								ret = ParseRet::PARSE_INVALID_UNICODE_HEX;
+								return v;
+							}
+							if (u2 < 0xDC00 || u2 > 0xDFFF)
+							{
+								auto v = JsonValue::Ptr(new JsonValue());
+								ret = ParseRet::PARSE_INVALID_UNICODE_SURROGATE;
+								return v;
+							}
+							u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
+						}
+						encode_utf8(c, u, tmpstr);
+						break;
+					}
 					default: {
 						auto v = JsonValue::Ptr(new JsonValue());
 						ret = ParseRet::PARSE_INVALID_STRING_ESCAPE;
