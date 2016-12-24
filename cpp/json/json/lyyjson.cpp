@@ -28,6 +28,7 @@ namespace lyy
 		case 'n': return parse_null(c, ret);
 		case 't': return parse_true(c, ret);
 		case 'f': return parse_false(c, ret);
+		case '\"': return parse_string(c, ret);
 		case '\0':
 			ret = ParseRet::PARSE_EXCEPT_VALUE;
 			return JsonValue::Ptr(new JsonValue());
@@ -157,5 +158,62 @@ namespace lyy
 		c->json = tmp;
 		ret = ParseRet::PARSE_OK;
 		return v;
+	}
+
+	/*
+	* parse number
+	*/
+	JsonValue::Ptr JsonParser::parse_string(JsonContext::Ptr c, ParseRet& ret)
+	{
+		next(c, '\"');
+		auto tmp = c->json;
+		string tmpstr;
+
+		while (true)
+		{
+			char ch = *tmp++;
+			switch (ch)
+			{
+			case '\"': {
+				auto v = JsonValue::Ptr(new JsonValue(tmpstr));
+				c->json = tmp;
+				ret = ParseRet::PARSE_OK;
+				return v;
+			}
+			case '\\': {
+				switch (*tmp++)
+				{
+					case '\"': tmpstr.push_back('\"'); break;
+					case '\\': tmpstr.push_back('\\'); break;
+					case '/': tmpstr.push_back('/'); break;
+					case 'f': tmpstr.push_back('\f'); break;
+					case 'n': tmpstr.push_back('\n'); break;
+					case 'b': tmpstr.push_back('\b'); break;
+					case 'r': tmpstr.push_back('\r'); break;
+					case 't': tmpstr.push_back('\t'); break;
+					default: {
+						auto v = JsonValue::Ptr(new JsonValue());
+						ret = ParseRet::PARSE_INVALID_STRING_ESCAPE;
+						return v;
+					}
+				}
+				break;
+			}
+			case '\0': {
+				auto v = JsonValue::Ptr(new JsonValue());
+				ret = ParseRet::PARSE_MISS_QUOTATION_MARK;
+				return v;
+			}
+			default:
+				if ((unsigned char)ch < 0x20)
+				{
+					auto v = JsonValue::Ptr(new JsonValue());
+					ret = ParseRet::PARSE_INVALID_STRING_ESCAPE;
+					return v;
+				}
+				tmpstr.push_back(ch);
+				break;
+			}
+		}
 	}
 }

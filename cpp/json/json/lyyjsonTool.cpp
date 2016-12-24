@@ -19,6 +19,9 @@ namespace lyy
 	/* double */
 	JsonValue::JsonValue(double double_value) : type(JsonType::JNUMBER), number_value(double_value) {}
 
+	/* string */
+	JsonValue::JsonValue(string string_value) : type(JsonType::JSTRING), string_value(string_value) {}
+
 	/*
 	* init context
 	*/
@@ -41,6 +44,20 @@ namespace lyy
 			return ValueRet::OK;
 		} else {
 			number = 0;
+			return ValueRet::ERR;
+		}
+	}
+
+	/* get string value */
+	ValueRet JsonValue::get_value(string& str)
+	{
+		if (JsonType::JSTRING == this->type)
+		{
+			str = this->string_value;
+			return ValueRet::OK;
+		}
+		else {
+			str = string();
 			return ValueRet::ERR;
 		}
 	}

@@ -117,3 +117,33 @@ TEST_CASE(parse_expect_value_FET)
 	TEST_ERROR(ParseRet::PARSE_EXCEPT_VALUE, "");
 	TEST_ERROR(ParseRet::PARSE_EXCEPT_VALUE, " ");
 }
+
+TEST_CASE(parse_string)
+{
+	TEST_STRING("", "\"\"");
+	TEST_STRING("Hello", "\"Hello\"");
+	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+	TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+}
+
+TEST_CASE(parse_missing_quotation_mark_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_MISS_QUOTATION_MARK, "\"");
+	TEST_ERROR(ParseRet::PARSE_MISS_QUOTATION_MARK, "\"abc");
+}
+
+TEST_CASE(parse_invalid_string_escape_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_ESCAPE, "\"\\v\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_ESCAPE, "\"\\'\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_ESCAPE, "\"\\0\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_ESCAPE, "\"\\x12\"");
+}
+
+/*
+TEST_CASE(parse_invalid_string_char_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_CHAR, "\"\x01\"");
+	TEST_ERROR(ParseRet::PARSE_INVALID_STRING_CHAR, "\"\x1F\"");
+}
+*/
