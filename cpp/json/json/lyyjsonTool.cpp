@@ -25,6 +25,9 @@ namespace lyy
 	/* array */
 	JsonValue::JsonValue(JsonValue::Array& array_value) : type(JsonType::JARRAY), array_value(array_value) {}
 
+	/* object */
+	JsonValue::JsonValue(JsonValue::Object& object_value) : type(JsonType::JOBJECT), object_value(object_value) {}
+
 	/*
 	* init context
 	*/
@@ -65,6 +68,7 @@ namespace lyy
 		}
 	}
 
+	/* get array value */
 	ValueRet JsonValue::get_value(JsonValue::Array& arr)
 	{
 		if (JsonType::JARRAY == this->type)
@@ -75,6 +79,29 @@ namespace lyy
 		else {
 			arr = JsonValue::Array();
 			return ValueRet::ERR;
+		}
+	}
+
+	/* get object value */
+	ValueRet JsonValue::get_value(JsonValue::Object& obj)
+	{
+		if (JsonType::JOBJECT == this->type)
+		{
+			obj = this->object_value;
+			return ValueRet::OK;
+		}
+		else {
+			obj = JsonValue::Object();
+			return ValueRet::ERR;
+		}
+	}
+
+	void JsonParser::char2Str(const char* strin, JsonValue::Str& strout, int len)
+	{
+		strout.clear();
+		for (int i = 0; i < len; ++i)
+		{
+			strout.push_back(strin[i]);
 		}
 	}
 

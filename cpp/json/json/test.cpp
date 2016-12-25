@@ -269,3 +269,91 @@ TEST_CASE(parse_miss_comma_or_square_bracket_FET)
 	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
 	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
 }
+
+TEST_CASE(parse_object)
+{
+	ParseRet ret;
+
+	/**/
+	auto v = JsonParser::parse("{ }", ret);
+	TEST_ASSERT(ParseRet::PARSE_OK == ret);
+	TEST_ASSERT(JsonType::JOBJECT == v->get_type());
+	JsonValue::Object obj;
+	v->get_value(obj);
+	TEST_ASSERT(0 == obj.size());
+
+	/**/
+	auto v2 = JsonParser::parse(" { "
+		"\"n\" : null , "
+		"\"f\" : false , "
+		"\"t\" : true , "
+		"\"i\" : 123 , "
+		"\"s\" : \"abc\", "
+		"\"a\" : [ 1, 2, 3 ],"
+		"\"o\" : { \"1\" : 12, \"2\" : 2, \"3\" : 3 }"
+		" } ", ret);
+	TEST_ASSERT(ParseRet::PARSE_OK == ret);
+	TEST_ASSERT(JsonType::JOBJECT == v2->get_type());
+	JsonValue::Object obj2;
+	v2->get_value(obj2);
+	TEST_ASSERT(7 == obj2.size());
+
+	JsonValue::Str key2_1;
+	JsonParser::char2Str("n", key2_1, 1);
+	auto value2_1 = obj2[key2_1];
+	TEST_ASSERT(JsonType::JNULL == value2_1->get_type());
+
+	JsonValue::Str key2_6;
+	JsonParser::char2Str("a", key2_6, 1);
+	auto value2_6 = obj2[key2_6];
+	TEST_ASSERT(JsonType::JARRAY == value2_6->get_type());
+	JsonValue::Array arr2_6;
+	value2_6->get_value(arr2_6);
+	auto num2_6_1 = arr2_6[0];
+	TEST_ASSERT(JsonType::JNUMBER == num2_6_1->get_type());
+	double num2_6_12;
+	num2_6_1->get_value(num2_6_12);
+	TEST_ASSERT(1.0 == num2_6_12);
+
+	JsonValue::Str key2_7;
+	JsonParser::char2Str("o", key2_7, 1);
+	auto value2_7 = obj2[key2_7];
+	TEST_ASSERT(JsonType::JOBJECT == value2_7->get_type());
+
+	JsonValue::Object obj2_7;
+	value2_7->get_value(obj2_7);
+	TEST_ASSERT(3 == obj2_7.size());
+	JsonValue::Str key2_7_1;
+	JsonParser::char2Str("1", key2_7_1, 1);
+	auto value2_7_1 = obj2_7[key2_7_1];
+	TEST_ASSERT(JsonType::JNUMBER == value2_7_1->get_type());
+	double num2_7_1;
+	value2_7_1->get_value(num2_7_1);
+	TEST_ASSERT(12.0 == num2_7_1);
+}
+
+TEST_CASE(parse_miss_key_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{1:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{true:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{false:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{null:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{[]:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{{}:1,");
+	TEST_ERROR(ParseRet::PARSE_MISS_KEY, "{\"a\":1,");
+}
+
+TEST_CASE(parse_miss_colon)
+{
+	TEST_ERROR(ParseRet::PARSE_MISS_COLON, "{\"a\"}");
+	TEST_ERROR(ParseRet::PARSE_MISS_COLON, "{\"a\",\"b\"}");
+}
+
+TEST_CASE(parse_miss_comma_or_curly_bracket)
+{
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1]");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1 \"b\"");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":{}");
+}

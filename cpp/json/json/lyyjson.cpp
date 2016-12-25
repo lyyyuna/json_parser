@@ -30,6 +30,7 @@ namespace lyy
 		case 'f': return parse_false(c, ret);
 		case '\"': return parse_string(c, ret);
 		case '[': return parse_array(c, ret);
+		case '{': return parse_object(c, ret);
 		case '\0':
 			ret = ParseRet::PARSE_EXCEPT_VALUE;
 			return JsonValue::Ptr(new JsonValue());
@@ -341,6 +342,83 @@ namespace lyy
 			}
 			else {
 				ret = ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
+				return JsonValue::Ptr(new JsonValue());
+			}
+		}
+	}
+
+	/*
+	* parse object
+	*/
+	JsonValue::Ptr JsonParser::parse_object(JsonContext::Ptr c, ParseRet& ret)
+	{
+		next(c, '{');
+
+		auto objecttmp = JsonValue::Object();
+		// consume whitespace
+		parse_whitespace(c);
+		if (*c->json == '}')
+		{
+			c->json++;
+			ret = ParseRet::PARSE_OK;
+			return JsonValue::Ptr(new JsonValue(objecttmp));
+		}
+
+		while (true)
+		{
+			// miss key
+			if (*c->json != '"')
+			{
+				ret = ParseRet::PARSE_MISS_KEY;
+				return JsonValue::Ptr(new JsonValue());
+			}
+			// parse key
+			auto keyvalue = parse_string(c, ret);
+			if ((ret != ParseRet::PARSE_OK) || keyvalue->get_type() != JsonType::JSTRING)
+				return JsonValue::Ptr(new JsonValue());
+
+			JsonValue::Str key;
+			auto vret = keyvalue->get_value(key);
+			if (vret != ValueRet::OK)
+			{
+				ret = ParseRet::PARSE_INVALID_VALUE;
+				return JsonValue::Ptr(new JsonValue());
+			}
+
+			// consume whitespace
+			parse_whitespace(c);
+			// miss colon
+			if (*c->json != ':')
+			{
+				ret = ParseRet::PARSE_MISS_COLON;
+				return JsonValue::Ptr(new JsonValue());
+			}
+			c->json++;
+			parse_whitespace(c);
+
+			// parse value
+			auto value = parse_value(c, ret);
+			if (ret != ParseRet::PARSE_OK)
+				return JsonValue::Ptr(new JsonValue());
+
+			// one pair parsed
+			objecttmp.insert({ key, value });
+
+			parse_whitespace(c);
+			if (*c->json == ',')
+			{
+				c->json++;
+				parse_whitespace(c);
+			}
+			else if (*c->json == '}')
+			{
+				// dont miss ++
+				c->json++;
+				ret = ParseRet::PARSE_OK;
+				return JsonValue::Ptr(new JsonValue(objecttmp));
+			}
+			else {
+				ret = ParseRet::PARSE_MISS_COMMA_OR_CURLY_BRACKET;
 				return JsonValue::Ptr(new JsonValue());
 			}
 		}
