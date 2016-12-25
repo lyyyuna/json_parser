@@ -29,6 +29,7 @@ namespace lyy
 		case 't': return parse_true(c, ret);
 		case 'f': return parse_false(c, ret);
 		case '\"': return parse_string(c, ret);
+		case '[': return parse_array(c, ret);
 		case '\0':
 			ret = ParseRet::PARSE_EXCEPT_VALUE;
 			return JsonValue::Ptr(new JsonValue());
@@ -295,6 +296,52 @@ namespace lyy
 				}
 				tmpstr.push_back(ch);
 				break;
+			}
+		}
+	}
+
+	/*
+	* parse array
+	*/
+	JsonValue::Ptr JsonParser::parse_array(JsonContext::Ptr c, ParseRet& ret)
+	{
+		JsonValue::Array arrtmp;
+
+		next(c, '[');
+		// consume whitespace
+		parse_whitespace(c);
+
+		if (*c->json == ']')
+		{
+			c->json++;
+			ret = ParseRet::PARSE_OK;
+			return JsonValue::Ptr(new JsonValue(arrtmp));
+		}
+
+		while (true)
+		{
+			auto e = parse_value(c, ret);
+			if (ParseRet::PARSE_OK != ret)
+			{
+				return JsonValue::Ptr(new JsonValue());
+			}
+			// add the parsed value to array
+			arrtmp.push_back(e);
+			// consume whitespace
+			parse_whitespace(c);
+			if (*c->json == ',')
+			{
+				c->json++;
+				parse_whitespace(c);
+			}
+			else if (*c->json == ']') {
+				c->json++;
+				ret = ParseRet::PARSE_OK;
+				return JsonValue::Ptr(new JsonValue(JsonValue::Array(arrtmp)));
+			}
+			else {
+				ret = ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
+				return JsonValue::Ptr(new JsonValue());
 			}
 		}
 	}

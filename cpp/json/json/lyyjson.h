@@ -34,7 +34,8 @@ namespace lyy
 		PARSE_INVALID_STRING_ESCAPE,
 		PARSE_INVALID_STRING_CHAR,
 		PARSE_INVALID_UNICODE_HEX,
-		PARSE_INVALID_UNICODE_SURROGATE
+		PARSE_INVALID_UNICODE_SURROGATE,
+		PARSE_MISS_COMMA_OR_SQUARE_BRACKET
 	};
 
 	enum class ValueRet
@@ -58,22 +59,26 @@ namespace lyy
 	{
 		typedef shared_ptr<JsonValue>			Ptr;
 		typedef vector<unsigned>				Str;
+		typedef vector<JsonValue::Ptr>			Array;
 
 	public:
 		JsonValue();	// default as JNULL
 		JsonValue(bool bool_value);
 		JsonValue(double double_value);
-		JsonValue(Str string_value);
+		JsonValue(Str& string_value);
+		JsonValue(Array& array_value);
 
 		JsonType get_type();
 		ValueRet get_value(double& number_value);
 		ValueRet get_value(JsonValue::Str& string_value);
+		ValueRet get_value(JsonValue::Array& array_value);
 
 	private:
 		JsonType type;
 		
 		double number_value;
 		Str string_value;
+		Array array_value;
 
 	};
 
@@ -86,6 +91,8 @@ namespace lyy
 		static JsonValue::Ptr		parse_false(JsonContext::Ptr c, ParseRet& ret);
 		static JsonValue::Ptr		parse_number(JsonContext::Ptr c, ParseRet& ret);
 		static JsonValue::Ptr		parse_string(JsonContext::Ptr c, ParseRet& ret);
+		static JsonValue::Ptr		parse_array(JsonContext::Ptr c, ParseRet& ret);
+
 		static const char*			parse_hex4(const char* p, unsigned* u);
 		static void					encode_utf8(JsonContext::Ptr c, unsigned u, JsonValue::Str& tmpstr);
 

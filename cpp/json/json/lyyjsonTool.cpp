@@ -20,7 +20,10 @@ namespace lyy
 	JsonValue::JsonValue(double double_value) : type(JsonType::JNUMBER), number_value(double_value) {}
 
 	/* string */
-	JsonValue::JsonValue(Str string_value) : type(JsonType::JSTRING), string_value(string_value) {}
+	JsonValue::JsonValue(Str& string_value) : type(JsonType::JSTRING), string_value(string_value) {}
+
+	/* array */
+	JsonValue::JsonValue(JsonValue::Array& array_value) : type(JsonType::JARRAY), array_value(array_value) {}
 
 	/*
 	* init context
@@ -58,6 +61,19 @@ namespace lyy
 		}
 		else {
 			str = JsonValue::Str();
+			return ValueRet::ERR;
+		}
+	}
+
+	ValueRet JsonValue::get_value(JsonValue::Array& arr)
+	{
+		if (JsonType::JARRAY == this->type)
+		{
+			arr = this->array_value;
+			return ValueRet::OK;
+		}
+		else {
+			arr = JsonValue::Array();
 			return ValueRet::ERR;
 		}
 	}

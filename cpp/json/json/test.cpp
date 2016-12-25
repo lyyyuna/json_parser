@@ -184,3 +184,88 @@ TEST_CASE(parse_invalid_unicode_hex_FET)
 	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u000G\"");
 	TEST_ERROR(ParseRet::PARSE_INVALID_UNICODE_HEX, "\"\\u 123\"");
 }
+
+TEST_CASE(parse_array)
+{
+	ParseRet ret;
+
+	/**/
+	auto v = JsonParser::parse("[ ]", ret);
+	TEST_ASSERT(ParseRet::PARSE_OK == ret);
+	TEST_ASSERT(JsonType::JARRAY == v->get_type());
+	JsonValue::Array arr;
+	ValueRet vret;
+	vret = v->get_value(arr);
+	TEST_ASSERT(ValueRet::OK == vret);
+	TEST_ASSERT(0 == arr.size());
+
+	/**/
+	auto v2 = JsonParser::parse("[ null , false , true , 123 , \"abc\" ]", ret);
+	TEST_ASSERT(ParseRet::PARSE_OK == ret);
+	TEST_ASSERT(JsonType::JARRAY == v2->get_type());
+	JsonValue::Array arr2;
+	ValueRet vret2;
+	vret2 = v2->get_value(arr2);
+	TEST_ASSERT(ValueRet::OK == vret2);
+	TEST_ASSERT(5 == arr2.size());
+
+	auto v2_1 = arr2[0];
+	TEST_ASSERT(JsonType::JNULL == v2_1->get_type());
+	auto v2_2 = arr2[1];
+	TEST_ASSERT(JsonType::JFALSE == v2_2->get_type());
+	auto v2_3 = arr2[2];
+	TEST_ASSERT(JsonType::JTRUE == v2_3->get_type());
+	auto v2_4 = arr2[3];
+	TEST_ASSERT(JsonType::JNUMBER == v2_4->get_type());
+	double v2_4_number;
+	v2_4->get_value(v2_4_number);
+	TEST_ASSERT(123.0 == v2_4_number);
+	auto v2_5 = arr2[4];
+	TEST_ASSERT(JsonType::JSTRING == v2_5->get_type());
+	JsonValue::Str v2_5_string;
+	v2_5->get_value(v2_5_string);
+	TEST_ASSERT(3 == v2_5_string.size());
+	TEST_ASSERT('a' == v2_5_string[0]);
+	TEST_ASSERT('b' == v2_5_string[1]);
+	TEST_ASSERT('c' == v2_5_string[2]);
+
+	/**/
+	auto v3 = JsonParser::parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]", ret);
+	TEST_ASSERT(ParseRet::PARSE_OK == ret);
+	TEST_ASSERT(JsonType::JARRAY == v3->get_type());
+	JsonValue::Array arr3;
+	ValueRet vret3;
+	vret3 = v3->get_value(arr3);
+	TEST_ASSERT(ValueRet::OK == vret3);
+	TEST_ASSERT(4 == arr3.size());
+
+	for (int i = 0; i < 4; ++i)
+	{
+		JsonValue::Ptr v3_1 = arr3[i];
+		JsonValue::Array arr3_1;
+		v3_1->get_value(arr3_1);
+		TEST_ASSERT(i == arr3_1.size());
+		for (int j = 0; j < i; ++j)
+		{
+			auto v3_e = arr3_1[j];
+			TEST_ASSERT(JsonType::JNUMBER == v3_e->get_type());
+			double v3_number;
+			v3_e->get_value(v3_number);
+			TEST_ASSERT((double)j == v3_number);
+		}
+	}
+}
+
+TEST_CASE(parse_invalid_array_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "[1,]");
+	TEST_ERROR(ParseRet::PARSE_INVALID_VALUE, "[\"a\", nul]");
+}
+
+TEST_CASE(parse_miss_comma_or_square_bracket_FET)
+{
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1}");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
+	TEST_ERROR(ParseRet::PARSE_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
+}
