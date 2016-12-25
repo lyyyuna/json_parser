@@ -1,7 +1,5 @@
 #include <iostream>
 #include <string>
-#include <locale>
-#include <codecvt>
 #include "lyyjson.h"
 #include "unittest.h"
 
